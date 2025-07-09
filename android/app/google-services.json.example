@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "889983767784",
+    "project_id": "sandboxnotion",
+    "storage_bucket": "sandboxnotion.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:889983767784:android:ee1505262ed22221a4655d",
+        "android_client_info": {
+          "package_name": "com.sandbox.notion"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "889983767784-example1randomvaluegoeshere.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sandbox.notion",
+            "certificate_hash": "REPLACE_WITH_YOUR_SHA1_FINGERPRINT"
+          }
+        },
+        {
+          "client_id": "889983767784-example2randomvaluegoeshere.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "REPLACE_WITH_YOUR_ANDROID_API_KEY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "889983767784-example2randomvaluegoeshere.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "889983767784-example3randomvaluegoeshere.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.sandbox.notion",
+                "app_store_id": "REPLACE_WITH_YOUR_APP_STORE_ID"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
