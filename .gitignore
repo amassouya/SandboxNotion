@@ -47,6 +47,8 @@ functions/firebase-debug.log*
 # 5. Environment / secrets
 .env
 .env.*
+# Allow template example to be committed
+!.env.example
 .envrc
 *.key
 *.pem
