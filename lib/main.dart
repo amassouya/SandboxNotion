@@ -20,6 +20,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:logger/logger.dart';
 import 'package:sandboxnotion/firebase_options.dart';
 import 'package:sandboxnotion/router/app_router.dart';
+import 'package:go_router/go_router.dart'; // Added import for GoRouter
 import 'package:sandboxnotion/services/analytics_service.dart';
 import 'package:sandboxnotion/services/error_service.dart';
 import 'package:sandboxnotion/services/notification_service.dart';

@@ -4,21 +4,28 @@ import 'package:sandboxnotion/utils/constants.dart';
 
 /// Todo screen that displays a task list with categories
 class TodoScreen extends StatefulWidget {
-  const TodoScreen({Key? key}) : super(key: key);
+  /// Optional list identifier passed from the router (e.g. `/sandbox/todo/:listId`)
+  ///
+  /// The parameter is currently not used inside the placeholder implementation,
+  /// but accepting it here allows the router (`app_router.dart`) to instantiate
+  /// the screen with an optional `listId` without throwing a type error.
+  final String? listId;
+
+  const TodoScreen({
+    Key? key,
+    this.listId,
+  }) : super(key: key);
 
   @override
   State<TodoScreen> createState() => _TodoScreenState();
 }
 
-class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateMixin {
-  // Tab controller for categories
-  late TabController _tabController;
+class _TodoScreenState extends State<TodoScreen> {
+  // Currently selected category
+  String _selectedCategory = 'All';
   
   // Available categories
   final List<String> _categories = ['All', 'Work', 'Personal', 'Shopping', 'Ideas'];
-  
-  // Loading state
-  bool _isLoading = false;
   
   // Dummy todo items
   final List<TodoItem> _todoItems = [
@@ -75,46 +82,18 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
     ),
   ];
 
-  @override
-  void initState() {
-    super.initState();
-    _tabController = TabController(length: _categories.length, vsync: this);
-    
-    // Simulate loading
-    setState(() {
-      _isLoading = true;
-    });
-    
-    Future.delayed(const Duration(milliseconds: 1500), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
-  }
-  
-  @override
-  void dispose() {
-    _tabController.dispose();
-    super.dispose();
-  }
-
   // Get filtered todo items based on selected category
   List<TodoItem> get _filteredTodoItems {
-    final selectedCategory = _categories[_tabController.index];
-    if (selectedCategory == 'All') {
+    if (_selectedCategory == 'All') {
       return _todoItems;
     }
-    return _todoItems.where((item) => item.category == selectedCategory).toList();
+    return _todoItems.where((item) => item.category == _selectedCategory).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDarkMode = theme.brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
-    final isSmallScreen = size.width < 600;
     
     return Scaffold(
       appBar: AppBar(
@@ -162,46 +141,68 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
             },
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          tabs: _categories.map((category) => Tab(text: category)).toList(),
-          labelColor: AppConstants.seedColor,
-          unselectedLabelColor: isDarkMode ? Colors.white70 : Colors.black54,
-          indicatorColor: AppConstants.seedColor,
-          dividerColor: Colors.transparent,
-          onTap: (_) {
-            // Force a rebuild to update the filtered list
-            setState(() {});
-          },
-        ),
       ),
       body: Stack(
         children: [
           // Todo list content
-          _isLoading
-              ? _buildLoadingState(context, isDarkMode)
-              : TabBarView(
-                  controller: _tabController,
-                  children: _categories.map((category) {
-                    final items = category == 'All'
-                        ? _todoItems
-                        : _todoItems.where((item) => item.category == category).toList();
+          Column(
+            children: [
+              // Category selector
+              Container(
+                height: 56,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _categories.length,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  itemBuilder: (context, index) {
+                    final category = _categories[index];
+                    final isSelected = category == _selectedCategory;
                     
-                    return items.isEmpty
-                        ? _buildEmptyState(context)
-                        : ListView.builder(
-                            itemCount: items.length,
-                            padding: EdgeInsets.symmetric(
-                              vertical: 8,
-                              horizontal: isSmallScreen ? 8 : 16,
-                            ),
-                            itemBuilder: (context, index) {
-                              final item = items[index];
-                              return _buildTodoItem(context, item);
-                            },
-                          );
-                  }).toList(),
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ChoiceChip(
+                        label: Text(category),
+                        selected: isSelected,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              _selectedCategory = category;
+                            });
+                          }
+                        },
+                        backgroundColor: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                        selectedColor: AppConstants.seedColor.withOpacity(0.2),
+                        labelStyle: TextStyle(
+                          color: isSelected
+                              ? AppConstants.seedColor
+                              : isDarkMode
+                                  ? Colors.white
+                                  : Colors.black87,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    );
+                  },
                 ),
+              ),
+              
+              const Divider(height: 1),
+              
+              // Todo list
+              Expanded(
+                child: _filteredTodoItems.isEmpty
+                    ? _buildEmptyState(context)
+                    : ListView.builder(
+                        itemCount: _filteredTodoItems.length,
+                        itemBuilder: (context, index) {
+                          final item = _filteredTodoItems[index];
+                          return _buildTodoItem(context, item);
+                        },
+                      ),
+              ),
+            ],
+          ),
           
           // Under construction overlay
           Positioned.fill(
@@ -266,27 +267,6 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
         backgroundColor: AppConstants.seedColor,
         foregroundColor: Colors.white,
         child: const Icon(Icons.add_task),
-      ),
-    );
-  }
-
-  // Build loading state widget
-  Widget _buildLoadingState(BuildContext context, bool isDarkMode) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(
-            color: AppConstants.seedColor,
-          ),
-          const SizedBox(height: 24),
-          Text(
-            'Loading tasks...',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: isDarkMode ? Colors.white70 : Colors.black54,
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -357,99 +337,76 @@ class _TodoScreenState extends State<TodoScreen> with SingleTickerProviderStateM
       direction: DismissDirection.endToStart,
       onDismissed: (_) {
         // Would remove the item in a real app
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Task "${item.title}" dismissed'),
-            action: SnackBarAction(
-              label: 'UNDO',
-              onPressed: () {
-                // Would implement undo functionality in a real app
-              },
-            ),
-          ),
-        );
       },
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 4, horizontal: 0),
-        elevation: 1,
-        child: ListTile(
-          leading: Checkbox(
-            value: item.isCompleted,
-            activeColor: AppConstants.seedColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-            onChanged: (value) {
-              setState(() {
-                item.isCompleted = value ?? false;
-              });
-            },
+      child: ListTile(
+        leading: Checkbox(
+          value: item.isCompleted,
+          activeColor: AppConstants.seedColor,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(4),
           ),
-          title: Text(
-            item.title,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              decoration: item.isCompleted ? TextDecoration.lineThrough : null,
-              color: item.isCompleted
-                  ? isDarkMode
-                      ? Colors.white38
-                      : Colors.black38
-                  : null,
-            ),
-          ),
-          subtitle: item.dueDate != null
-              ? Text(
-                  'Due: ${_formatDate(item.dueDate!)}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: _isOverdue(item.dueDate!) && !item.isCompleted
-                        ? Colors.red
-                        : null,
-                  ),
-                )
-              : null,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Priority indicator
-              if (item.priority != Priority.none)
-                Container(
-                  width: 12,
-                  height: 12,
-                  margin: const EdgeInsets.only(right: 8),
-                  decoration: BoxDecoration(
-                    color: priorityColor,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              
-              // Category chip
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 8,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Text(
-                  item.category,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: isDarkMode ? Colors.white70 : Colors.black54,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          onTap: () {
-            // Would open task details in a real app
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Task details for "${item.title}"'),
-                duration: const Duration(seconds: 1),
-              ),
-            );
+          onChanged: (value) {
+            setState(() {
+              item.isCompleted = value ?? false;
+            });
           },
         ),
+        title: Text(
+          item.title,
+          style: theme.textTheme.bodyLarge?.copyWith(
+            decoration: item.isCompleted ? TextDecoration.lineThrough : null,
+            color: item.isCompleted
+                ? isDarkMode
+                    ? Colors.white38
+                    : Colors.black38
+                : null,
+          ),
+        ),
+        subtitle: item.dueDate != null
+            ? Text(
+                'Due: ${_formatDate(item.dueDate!)}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: _isOverdue(item.dueDate!) && !item.isCompleted
+                      ? Colors.red
+                      : null,
+                ),
+              )
+            : null,
+        trailing: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Priority indicator
+            if (item.priority != Priority.none)
+              Container(
+                width: 12,
+                height: 12,
+                margin: const EdgeInsets.only(right: 8),
+                decoration: BoxDecoration(
+                  color: priorityColor,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            
+            // Category chip
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 8,
+                vertical: 4,
+              ),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                item.category,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: isDarkMode ? Colors.white70 : Colors.black54,
+                ),
+              ),
+            ),
+          ],
+        ),
+        onTap: null, // Disabled in placeholder
       ),
     );
   }

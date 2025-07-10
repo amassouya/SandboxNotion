@@ -4,7 +4,17 @@ import 'package:sandboxnotion/utils/constants.dart';
 
 /// Notes screen that displays a list of notes with a rich text editor
 class NotesScreen extends StatefulWidget {
-  const NotesScreen({Key? key}) : super(key: key);
+  /// Optional note identifier passed from the router (e.g. `/sandbox/notes/:noteId`)
+  ///
+  /// The parameter is currently not used inside the placeholder implementation,
+  /// but accepting it here allows the router (`app_router.dart`) to instantiate
+  /// the screen with an optional `noteId` without throwing a type error.
+  final String? noteId;
+
+  const NotesScreen({
+    Key? key,
+    this.noteId,
+  }) : super(key: key);
 
   @override
   State<NotesScreen> createState() => _NotesScreenState();
@@ -116,6 +126,20 @@ class _NotesScreenState extends State<NotesScreen> {
       
       return categoryMatch && searchMatch;
     }).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Pre-select a note if a noteId was provided via the route
+    if (widget.noteId != null) {
+      final note = _notes.firstWhere(
+        (n) => n.id == widget.noteId,
+        orElse: () => _selectedNote ?? _notes.first,
+      );
+      _selectedNote = note;
+    }
   }
 
   @override

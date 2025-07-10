@@ -93,16 +93,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/login',
         name: 'login',
-        builder: (context, state) => LoginScreen(
-          redirectTo: state.uri.queryParameters['redirect'],
-        ),
+        builder: (context, state) => const LoginScreen(),
       ),
       GoRoute(
         path: '/signup',
         name: 'signup',
-        builder: (context, state) => SignupScreen(
-          redirectTo: state.uri.queryParameters['redirect'],
-        ),
+        builder: (context, state) => const SignupScreen(),
       ),
       GoRoute(
         path: '/forgot-password',
@@ -197,9 +193,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                   GoRoute(
                     path: ':deckId',
                     name: 'card-deck',
-                    builder: (context, state) => CardsScreen(
-                      deckId: state.pathParameters['deckId'],
-                    ),
+                    builder: (context, state) => const CardsScreen(),
                   ),
                 ],
               ),

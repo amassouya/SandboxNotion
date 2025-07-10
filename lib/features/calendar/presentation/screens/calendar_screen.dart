@@ -6,7 +6,17 @@ import 'package:table_calendar/table_calendar.dart';
 
 /// Calendar screen that displays a full calendar view with events
 class CalendarScreen extends StatefulWidget {
-  const CalendarScreen({Key? key}) : super(key: key);
+  /// Optional event identifier passed from the router (e.g. `/sandbox/calendar/:eventId`)
+  ///
+  /// The parameter is currently not used inside the placeholder implementation,
+  /// but accepting it here allows the router (`app_router.dart`) to instantiate
+  /// the screen with an optional `eventId` without throwing a type error.
+  final String? eventId;
+
+  const CalendarScreen({
+    Key? key,
+    this.eventId,
+  }) : super(key: key);
 
   @override
   State<CalendarScreen> createState() => _CalendarScreenState();

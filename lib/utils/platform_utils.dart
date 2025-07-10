@@ -1,252 +1,188 @@
-import 'dart:io';
-import 'dart:ui';
-
-import 'package:device_info_plus/device_info_plus.dart';
-import 'package:flutter/foundation.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'package:package_info_plus/package_info_plus.dart';
 import 'package:sandboxnotion/utils/constants.dart';
 
-/// Utility class for platform-specific operations and device detection
+/// Utilities for platform-specific and responsive design functionality
 class PlatformUtils {
-  static final DeviceInfoPlugin _deviceInfo = DeviceInfoPlugin();
-  static PackageInfo? _packageInfo;
-
-  /// Initialize platform utilities
-  static Future<void> init() async {
-    _packageInfo = await PackageInfo.fromPlatform();
-  }
-
-  /// Returns true if the app is running on a web platform
-  static bool get isWeb => kIsWeb;
-
-  /// Returns true if the app is running on an Android device
-  static bool get isAndroid => !kIsWeb && Platform.isAndroid;
-
-  /// Returns true if the app is running on an iOS device
-  static bool get isIOS => !kIsWeb && Platform.isIOS;
-
-  /// Returns true if the app is running on a macOS device
-  static bool get isMacOS => !kIsWeb && Platform.isMacOS;
-
-  /// Returns true if the app is running on a Windows device
-  static bool get isWindows => !kIsWeb && Platform.isWindows;
-
-  /// Returns true if the app is running on a Linux device
-  static bool get isLinux => !kIsWeb && Platform.isLinux;
-
-  /// Returns true if the app is running on a desktop platform
-  static bool get isDesktop => !kIsWeb && (isMacOS || isWindows || isLinux);
-
-  /// Returns true if the app is running on a mobile platform
-  static bool get isMobile => !kIsWeb && (isAndroid || isIOS);
-
-  /// Returns true if the app is running in debug mode
-  static bool get isDebug => kDebugMode;
-
-  /// Returns true if the app is running in release mode
-  static bool get isRelease => kReleaseMode;
-
-  /// Returns true if the app is running in profile mode
-  static bool get isProfile => kProfileMode;
-
-  /// Returns the device type based on screen width
+  /// Returns the current device type based on screen width
   static DeviceType getDeviceType(double width) {
-    if (width < AppConstants.tabletBreakpoint) {
+    if (width <= AppConstants.mobileBreakpoint) {
       return DeviceType.mobile;
-    } else if (width < AppConstants.desktopBreakpoint) {
+    } else if (width <= AppConstants.tabletBreakpoint) {
       return DeviceType.tablet;
     } else {
       return DeviceType.desktop;
     }
   }
 
-  /// Returns the current device type based on the window size
-  static DeviceType get currentDeviceType {
-    final width = PlatformDispatcher.instance.views.first.physicalSize.width /
-        PlatformDispatcher.instance.views.first.devicePixelRatio;
-    return getDeviceType(width);
+  /// Returns true if the app is running on a mobile device
+  static bool isMobileDevice(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return getDeviceType(width) == DeviceType.mobile;
   }
 
-  /// Returns the app version string
-  static String get appVersion {
-    if (_packageInfo != null) {
-      return '${_packageInfo!.version}+${_packageInfo!.buildNumber}';
-    }
-    return AppConstants.appVersion;
+  /// Returns true if the app is running on a tablet device
+  static bool isTabletDevice(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return getDeviceType(width) == DeviceType.tablet;
   }
 
-  /// Returns the app name
-  static String get appName {
-    if (_packageInfo != null) {
-      return _packageInfo!.appName;
-    }
-    return AppConstants.appName;
+  /// Returns true if the app is running on a desktop device
+  static bool isDesktopDevice(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    return getDeviceType(width) == DeviceType.desktop;
   }
 
-  /// Returns the app package name
-  static String get packageName {
-    if (_packageInfo != null) {
-      return _packageInfo!.packageName;
-    }
-    return AppConstants.appPackageName;
+  /// Returns true if the app is running on iOS
+  static bool get isIOS {
+    return !kIsWeb && Platform.isIOS;
   }
 
-  /// Returns the device model name
-  static Future<String> getDeviceModel() async {
-    if (kIsWeb) {
-      return 'Web Browser';
-    } else if (Platform.isAndroid) {
-      final info = await _deviceInfo.androidInfo;
-      return '${info.manufacturer} ${info.model}';
-    } else if (Platform.isIOS) {
-      final info = await _deviceInfo.iosInfo;
-      return '${info.name} (${info.systemName} ${info.systemVersion})';
-    } else if (Platform.isMacOS) {
-      final info = await _deviceInfo.macOsInfo;
-      return '${info.computerName} (${info.osRelease})';
-    } else if (Platform.isWindows) {
-      final info = await _deviceInfo.windowsInfo;
-      return 'Windows ${info.productName} (${info.buildNumber})';
-    } else if (Platform.isLinux) {
-      final info = await _deviceInfo.linuxInfo;
-      return '${info.name} ${info.version}';
-    }
-    return 'Unknown Device';
+  /// Returns true if the app is running on Android
+  static bool get isAndroid {
+    return !kIsWeb && Platform.isAndroid;
   }
 
-  /// Returns the OS version
-  static Future<String> getOSVersion() async {
+  /// Returns true if the app is running on macOS
+  static bool get isMacOS {
+    return !kIsWeb && Platform.isMacOS;
+  }
+
+  /// Returns true if the app is running on Windows
+  static bool get isWindows {
+    return !kIsWeb && Platform.isWindows;
+  }
+
+  /// Returns true if the app is running on Linux
+  static bool get isLinux {
+    return !kIsWeb && Platform.isLinux;
+  }
+
+  /// Returns true if the app is running on Web
+  static bool get isWeb {
+    return kIsWeb;
+  }
+
+  /// Returns true if the app is running on a mobile platform (iOS or Android)
+  static bool get isMobilePlatform {
+    return !kIsWeb && (Platform.isIOS || Platform.isAndroid);
+  }
+
+  /// Returns true if the app is running on a desktop platform (macOS, Windows, Linux)
+  static bool get isDesktopPlatform {
+    return !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
+  }
+
+  /// Returns the current platform as a string
+  static String get platformName {
     if (kIsWeb) {
       return 'Web';
-    } else if (Platform.isAndroid) {
-      final info = await _deviceInfo.androidInfo;
-      return 'Android ${info.version.release} (SDK ${info.version.sdkInt})';
     } else if (Platform.isIOS) {
-      final info = await _deviceInfo.iosInfo;
-      return '${info.systemName} ${info.systemVersion}';
-    } else if (Platform.isMacOS) {
-      final info = await _deviceInfo.macOsInfo;
-      return 'macOS ${info.osRelease}';
-    } else if (Platform.isWindows) {
-      final info = await _deviceInfo.windowsInfo;
-      return 'Windows ${info.buildNumber}';
-    } else if (Platform.isLinux) {
-      final info = await _deviceInfo.linuxInfo;
-      return 'Linux ${info.version}';
-    }
-    return 'Unknown OS';
-  }
-
-  /// Returns the appropriate file storage path for the current platform
-  static Future<String> getAppStoragePath() async {
-    if (kIsWeb) {
-      return '';
+      return 'iOS';
     } else if (Platform.isAndroid) {
-      return '/data/user/0/${AppConstants.appPackageName}';
-    } else if (Platform.isIOS || Platform.isMacOS) {
-      return (await path_provider.getApplicationDocumentsDirectory()).path;
+      return 'Android';
+    } else if (Platform.isMacOS) {
+      return 'macOS';
     } else if (Platform.isWindows) {
-      return (await path_provider.getApplicationSupportDirectory()).path;
+      return 'Windows';
     } else if (Platform.isLinux) {
-      return (await path_provider.getApplicationSupportDirectory()).path;
-    }
-    return '';
-  }
-
-  /// Returns the appropriate temporary directory path
-  static Future<String> getTempPath() async {
-    if (kIsWeb) {
-      return '';
-    }
-    return (await path_provider.getTemporaryDirectory()).path;
-  }
-
-  /// Returns true if the device is in dark mode
-  static bool isDarkMode(BuildContext context) {
-    return MediaQuery.of(context).platformBrightness == Brightness.dark;
-  }
-
-  /// Returns the appropriate padding for safe areas based on platform
-  static EdgeInsets getSafePadding(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    
-    // For mobile devices, respect the safe area
-    if (isMobile) {
-      return mediaQuery.padding;
-    }
-    
-    // For web and desktop, use custom padding
-    if (isWeb || isDesktop) {
-      return const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0);
-    }
-    
-    // Default fallback
-    return mediaQuery.padding;
-  }
-
-  /// Returns a platform-appropriate duration for animations
-  static Duration getPlatformAnimationDuration() {
-    if (isIOS || isMacOS) {
-      return AppConstants.animationNormal;
+      return 'Linux';
     } else {
-      return AppConstants.animationFast;
+      return 'Unknown';
     }
   }
 
-  /// Returns the appropriate text direction for the current locale
-  static TextDirection getTextDirectionForLocale(Locale locale) {
-    // RTL languages
-    const rtlLanguages = ['ar', 'fa', 'he', 'ur'];
-    if (rtlLanguages.contains(locale.languageCode)) {
-      return TextDirection.rtl;
-    }
-    return TextDirection.ltr;
+  /// Returns true if the device is in landscape orientation
+  static bool isLandscape(BuildContext context) {
+    return MediaQuery.of(context).orientation == Orientation.landscape;
   }
 
-  /// Returns true if the current platform supports biometric authentication
-  static Future<bool> supportsBiometrics() async {
-    if (kIsWeb) {
-      return false;
+  /// Returns true if the device is in portrait orientation
+  static bool isPortrait(BuildContext context) {
+    return MediaQuery.of(context).orientation == Orientation.portrait;
+  }
+
+  /// Returns the safe area padding for the current device
+  static EdgeInsets safeAreaPadding(BuildContext context) {
+    return MediaQuery.of(context).padding;
+  }
+
+  /// Returns the safe area insets for the current device
+  static EdgeInsets safeAreaInsets(BuildContext context) {
+    return MediaQuery.of(context).viewInsets;
+  }
+
+  /// Returns a responsive value based on screen size
+  /// [mobile] - Value for mobile screens
+  /// [tablet] - Value for tablet screens
+  /// [desktop] - Value for desktop screens
+  static T responsiveValue<T>({
+    required BuildContext context,
+    required T mobile,
+    required T tablet,
+    required T desktop,
+  }) {
+    final deviceType = getDeviceType(MediaQuery.of(context).size.width);
+    switch (deviceType) {
+      case DeviceType.mobile:
+        return mobile;
+      case DeviceType.tablet:
+        return tablet;
+      case DeviceType.desktop:
+        return desktop;
     }
+  }
+
+  /// Returns a responsive padding based on screen size
+  static EdgeInsets responsivePadding(BuildContext context) {
+    return responsiveValue<EdgeInsets>(
+      context: context,
+      mobile: const EdgeInsets.all(8.0),
+      tablet: const EdgeInsets.all(16.0),
+      desktop: const EdgeInsets.all(24.0),
+    );
+  }
+
+  /// Returns a responsive font size based on screen size
+  static double responsiveFontSize(
+    BuildContext context, {
+    required double baseFontSize,
+    double? mobileMultiplier,
+    double? tabletMultiplier,
+    double? desktopMultiplier,
+  }) {
+    final deviceType = getDeviceType(MediaQuery.of(context).size.width);
     
-    try {
-      final localAuth = LocalAuthentication();
-      return await localAuth.canCheckBiometrics;
-    } catch (e) {
-      return false;
+    switch (deviceType) {
+      case DeviceType.mobile:
+        return baseFontSize * (mobileMultiplier ?? 0.8);
+      case DeviceType.tablet:
+        return baseFontSize * (tabletMultiplier ?? 1.0);
+      case DeviceType.desktop:
+        return baseFontSize * (desktopMultiplier ?? 1.2);
     }
   }
 
-  /// Returns true if the device has a notch or dynamic island (iOS)
-  static bool hasNotch(BuildContext context) {
-    final mediaQuery = MediaQuery.of(context);
-    return mediaQuery.viewPadding.top > 20;
+  /// Returns a responsive width constraint based on screen size
+  static BoxConstraints responsiveWidthConstraints(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    
+    return responsiveValue<BoxConstraints>(
+      context: context,
+      mobile: BoxConstraints(maxWidth: width * 0.95),
+      tablet: BoxConstraints(maxWidth: width * 0.85),
+      desktop: BoxConstraints(maxWidth: width * 0.75),
+    );
   }
-}
 
-/// Extension for platform-specific UI adjustments
-extension PlatformAwareContext on BuildContext {
-  /// Returns true if the device is in dark mode
-  bool get isDarkMode => PlatformUtils.isDarkMode(this);
-  
-  /// Returns the current device type
-  DeviceType get deviceType => PlatformUtils.getDeviceType(
-    MediaQuery.of(this).size.width,
-  );
-  
-  /// Returns true if the current device is a mobile phone
-  bool get isMobileDevice => deviceType == DeviceType.mobile;
-  
-  /// Returns true if the current device is a tablet
-  bool get isTabletDevice => deviceType == DeviceType.tablet;
-  
-  /// Returns true if the current device is a desktop
-  bool get isDesktopDevice => deviceType == DeviceType.desktop;
-  
-  /// Returns the safe area padding
-  EdgeInsets get safePadding => PlatformUtils.getSafePadding(this);
-  
-  /// Returns true if the device has a notch
-  bool get hasNotch => PlatformUtils.hasNotch(this);
+  /// Returns a responsive height based on screen size as a percentage of screen height
+  static double responsiveHeight(BuildContext context, double percentage) {
+    return MediaQuery.of(context).size.height * percentage;
+  }
+
+  /// Returns a responsive width based on screen size as a percentage of screen width
+  static double responsiveWidth(BuildContext context, double percentage) {
+    return MediaQuery.of(context).size.width * percentage;
+  }
 }
